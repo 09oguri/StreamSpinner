@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<wrapper name="Remote" class="org.streamspinner.wrapper.RemoteStreamServerWrapper">
+	<parameter name="tablename" value="RTurbine" />
+	<parameter name="attributes" value="RTurbine.timestamp,RTurbine.ttxd11,RTurbine.ttxd12,RTurbine.ttxd13,RTurbine.ttxd14,RTurbine.tnhrpm,Turbine.fsr" />
+	<parameter name="types" value="Long,Double,Double,Double,Double,Double,Double" />
+	<parameter name="query" value="MASTER Turbine SELECT * FROM Turbine[1]" />
+	<parameter name="url" value="rmi://130.158.76.48/StreamSpinnerServer" />
+</wrapper>

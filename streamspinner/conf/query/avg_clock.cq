@@ -1,0 +1,3 @@
+MASTER Clock
+SELECT avg(Clock.Timestamp)
+FROM Clock[1]

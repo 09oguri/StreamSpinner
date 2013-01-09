@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<wrapper name="Durable" class="org.streamspinner.distributed.DurableRemoteStreamServerWrapper">
+	<parameter name="tablename" value="RR" />
+	<parameter name="attributes" value="RR.timestamp,RR.a1,RR.a2,RR.a3" />
+	<parameter name="types" value="Long,String,Long,Double" />
+	<parameter name="query" value="MASTER R SELECT * FROM R[1]" />
+	<parameter name="sourceurl" value="rmi://130.158.76.39/StreamSpinnerServer" />
+	<parameter name="primaryurl" value="rmi://130.158.76.6/Durable" />
+	<parameter name="myurl" value="rmi://130.158.76.39/Durable" />
+	<parameter name="sleep" value="3000" />
+</wrapper>

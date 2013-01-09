@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<conf>
+  <!-- cost (msec/Tuple) -->
+  <cost name="join" value="5" />
+  <cost name="selection" value="1" />
+  <cost name="projection" value="1" />
+
+  <!-- rate (Tuple/msec) -->
+  <input_rate name="Stream1" value="0.002" />
+  <input_rate name="Stream2" value="0.002" />
+  <input_rate name="Turbine" value="0.001" />
+  <insertion_rate size="3700,6500,8600" value="32,29,26" />
+
+  <schema name="Stream1" value="Stream1.timestamp:Long,Stream1.id:Long,Stream1.name:String,Stream1.value:Double"/>
+  <schema name="Stream2" value="Stream2.v1:Long,Stream2.v2:Long,Stream2.v3:Long,Stream2.v4:Long,Stream2.v5:Long,Stream2.v6:Long,Stream2.v7:Long,Stream2.v8:Long,Stream2.v9:Long,Stream2.v10:Long"/>
+  <schema name="log510" value="log510.v1:Long,log510.v2:Long"/>
+  <schema name="log511" value="log511.v1:Long,log511.v2:Long"/>
+  <schema name="log512" value="log512.v1:Long,log512.v2:Long"/>
+  <schema name="log513" value="log513.v1:Long,log513.v2:Long"/>
+  <schema name="log514" value="log514.v1:Long,log514.v2:Long"/>
+  <schema name="log515" value="log515.v1:Long,log515.v2:Long"/>
+  <schema name="log516" value="log516.v1:Long,log516.v2:Long"/>
+  <schema name="log517" value="log517.v1:Long,log517.v2:Long"/>
+  <schema name="log518" value="log518.v1:Long,log518.v2:Long"/>
+
+  <schema name="log5" value="log5.v1:Long,log5.s2:String,log5.v3:Long"/>
+
+  <schema name="log2" value="log2.v1:Long,log2.v2:Long,log2.v3:String,log2.v4:Double"/>
+  <schema name="log4" value="log4.v1:Double,log4.s2:String"/>
+  <schema name="log6" value="log6.v1:Double,log6.s2:String"/>
+  <schema name="log102" value="log102.v1:Long,log102.v2:Long,log102.v3:String,log102.v4:Double"/>
+  <schema name="log104" value="log104.v1:Double,log104.s2:String"/>
+  <schema name="log106" value="log106.v1:Double,log106.s2:String"/>
+  <schema name="log202" value="log202.v1:Long,log202.v2:Long,log202.v3:String,log202.v4:Double"/>
+  <schema name="log204" value="log204.v1:Double,log204.s2:String"/>
+  <schema name="log206" value="log206.v1:Double,log206.s2:String"/>
+  <schema name="log302" value="log302.v1:Long,log302.v2:Long,log302.v3:String,log302.v4:Double"/>
+  <schema name="log304" value="log304.v1:Double,log304.s2:String"/>
+  <schema name="log306" value="log306.v1:Double,log306.s2:String"/>
+  <schema name="log402" value="log402.v1:Long,log402.v2:Long,log402.v3:String,log402.v4:Double"/>
+  <schema name="log404" value="log404.v1:Double,log404.s2:String"/>
+  <schema name="log406" value="log406.v1:Double,log406.s2:String"/>
+
+  <schema name="Turbine" value="Turbine.timestamp:Long,Turbine.ttxd11:Double,Turbine.ttxd12:Double,Turbine.ttxd13:Double,Turbine.ttxd14:Double,Turbine.tnhrpm:Double,Turbine.fsr:Double"/>
+  <schema name="validator_exp" value="validator_exp.timestamp:Long,validator_exp.ttxd11:Double"/>
+
+  <short value="false" />
+</conf>

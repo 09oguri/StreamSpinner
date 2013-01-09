@@ -1,0 +1,3 @@
+MASTER Unit1
+SELECT Unit1.Timestamp
+FROM Unit1[1]

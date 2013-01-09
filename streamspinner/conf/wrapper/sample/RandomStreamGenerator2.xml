@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<wrapper name="Random2" class="org.streamspinner.wrapper.RandomStreamGenerator2">
+	<parameter name="tablename" value="R2" />
+	<parameter name="type" value="Long" />
+	<parameter name="interval" value="1000" />
+	<parameter name="shift" value="5000" />
+	<parameter name="rows" value="10" />
+	<parameter name="columns" value="5" />
+</wrapper>

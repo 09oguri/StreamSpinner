@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<wrapper name="CSV" class="org.streamspinner.wrapper.CSVFileStream">
+	<parameter name="filename" value="conf/db/Data.csv" />
+	<parameter name="type" value="periodic" />
+	<parameter name="tablename" value="CSV" />
+	<parameter name="columnnames" value="CSV.A,CSV.B,CSV.C" />
+	<parameter name="columntypes" value="Double,Double,Double" />
+	<parameter name="interval" value="3000" />
+	<parameter name="tuplesetsize" value="2" />
+</wrapper>

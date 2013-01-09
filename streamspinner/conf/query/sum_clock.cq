@@ -1,0 +1,3 @@
+MASTER Clock
+SELECT sum(Clock.Timestamp)
+FROM Clock[5000]

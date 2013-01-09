@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<wrapper name="CommandStream" class="org.streamspinner.wrapper.CommandWrapper">
+	<parameter name="interval" value="5000" />
+	<parameter name="shift" value="5000" />
+	<parameter name="command" value="dir" />
+</wrapper>

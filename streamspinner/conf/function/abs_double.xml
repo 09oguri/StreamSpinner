@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<function name="abs" aggregate="false">
+	<parameter name="argtypes" value="Double" />
+	<parameter name="returntype" value="Double" />
+	<parameter name="owner" value="java.lang.Math" />
+	<parameter name="method" value="abs" />
+</function>

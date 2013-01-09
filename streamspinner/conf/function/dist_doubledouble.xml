@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<function name="dist" aggregate="false">
+	<parameter name="argtypes" value="Double[],Double[]" />
+	<parameter name="returntype" value="Double" />
+	<parameter name="owner" value="org.streamspinner.function.TimeSeriesFunctions" />
+	<parameter name="method" value="euclideanDistance" />
+</function>

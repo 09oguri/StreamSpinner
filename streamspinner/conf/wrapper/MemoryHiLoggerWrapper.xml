@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<wrapper name="Unit" class="org.streamspinner.wrapper.MemoryHiLoggerWrapper">
+	<parameter name="hostname" value="192.168.172.161" />
+	<parameter name="port" value="8802" />
+	<parameter name="interval" value="10" />
+</wrapper>

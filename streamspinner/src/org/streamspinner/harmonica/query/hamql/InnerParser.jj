@@ -1,0 +1,814 @@
+/*
+ * Copyright 2005-2009 StreamSpinner Project
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+options{
+	IGNORE_CASE=true;
+}
+
+// paserのクラス名とparse以外の部分の定義
+PARSER_BEGIN(InnerParser)
+
+package org.streamspinner.harmonica.query.hamql;
+
+import org.streamspinner.*;
+import org.streamspinner.engine.*;
+import org.streamspinner.query.*;
+import org.streamspinner.harmonica.*;
+import org.streamspinner.harmonica.query.*;
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+
+/**
+ * 内部パーサー．
+ * @author snic
+ * @version 1.0 (2006.7.26)
+ */
+public class InnerParser {
+	private HamQLQuery hamql = null;
+	
+	public InnerParser(String hamql_statement){
+		this(new BufferedReader(new StringReader(hamql_statement)));
+
+		hamql = new HamQLQuery();		
+	}
+
+	/**
+	 * 解析して抽出されたHamQLQueryオブジェクトを取得する．
+	 *
+	 * @return HamQLQueryオブジェクト
+	 */
+	public HamQLQuery getQuery(){
+		return hamql;
+	}
+
+	private void debug(Object o){
+		HarmonicaManager.debug("InnerParser",o);
+	}
+}
+
+PARSER_END(InnerParser)
+
+// ***** SKIP: 名前を付ける必要がないものを定義 *****//
+SKIP:
+{
+	" "
+|	"\t"
+|	"\r"
+|	"\n"	
+}
+
+// ***** TOKEN: 名前を付ける必要があるものを定義 <名前: "記述"> *****//
+TOKEN: // 問合せ
+{
+	<MASTER: "MASTER">
+|	<SELECT: "SELECT">
+|	<FROM: "FROM">
+|	<WHERE: "WHERE">
+|	<AND: "AND">
+|	<GROUP: "GROUP">
+|	<BY: "BY">
+|	<AS: "AS">
+|	<NOW: "NOW">
+|	<UNION: "UNION">
+|	<ALL: "ALL">
+|	<TIME: "TIME">
+}
+
+TOKEN: // 蓄積要求
+{
+	<CREATE: "CREATE">
+|	<TABLE: "TABLE">
+|	<INSERT: "INSERT">
+|	<INTO: "INTO">
+|	<DROP: "DROP">
+}
+
+TOKEN: // データ型
+{
+	<LONG: "LONG">
+|	<DOUBLE: "DOUBLE">
+|	<STRING: "STRING">
+|	<OBJECT: "OBJECT">
+}
+
+TOKEN: // 諸記号
+{
+	<LE: "<=">
+|	<LT: "<">
+|	<GE: ">=">
+|	<GT: ">">
+|	<EQ: "=">
+|	<NE: "<>">
+|	<LK: "(">
+|	<RK: ")">
+|	<KLK: "[">
+|	<KRK: "]">
+|	<TLK: "{">
+|	<TRK: "}">
+|	<PLUS: "+">
+|	<MINUS: "-">
+|	<DIV: "/">
+|	<DOT: ".">
+|	<CONNMA: ",">
+|	<ASTER: "*">
+|	<SINGLE_QUOTATION: "\'">
+|	<UNDERLINE: "_">
+|	<COLON: ":">
+}
+
+TOKEN: // 数値
+{
+	<INTEGER_VALUE: (["0"-"9"])+>
+|	<DOUBLE_VALUE: <INTEGER_VALUE>(<DOT><INTEGER_VALUE>)?>
+|	<NUMBER: <DOUBLE_VALUE>>
+}
+
+TOKEN: // 単語
+{
+	<#LETTER: ["a"-"z","A"-"Z"]>
+|	<WORD: (<LETTER>)+(<INTEGER_VALUE>|<LETTER>|<UNDERLINE>)*>
+}
+
+
+TOKEN:
+{
+	<#SPACE_WORD:  " "<WORD>>
+|	<WORDS: <SINGLE_QUOTATION><WORD>(<SPACE_WORD>)*<SINGLE_QUOTATION>>
+}
+
+TOKEN:
+{
+	<#SPACE_DATE_WORD: " "<DATE_WORD>>
+|	<DATE_WORDS: <DATE_WORD>(<SPACE_DATE_WORD>)*>
+|	<DATE_WORD: (<INTEGER_VALUE>)+
+				((<COLON>|<DIV>|<UNDERLINE>|<DOT>|<MINUS>)
+				  <INTEGER_VALUE>)*>
+}
+
+// ********** 解析作業 ********** //
+public void parse() throws HarmonicaException:
+{
+	if(hamql == null) throw new HarmonicaException("Invalid initialize!");
+}
+{
+	// 問合せ
+		create_table(){ return; }
+	|	drop_table(){ return; }
+	|
+		(
+			(master())?
+			(insert_start())?
+			query()
+			(union())?
+		)
+		{return;}
+}
+
+void query():
+{}
+{
+	select()
+	from()
+	(where())?
+	(group())?
+}
+
+void union():
+{
+	HamQLQuery union_query = new HamQLQuery();
+	boolean is_union_all = false;
+}
+{
+	<UNION>
+	(<ALL>{is_union_all = true;})?
+	hamql_query(union_query)
+	{
+		union_query.setUnionAll(is_union_all);
+		hamql.addUnion(union_query);
+	}
+	(union())?
+}
+
+// ---------- DROP節 ---------- //
+void drop_table():
+{
+	Token t1 = null;
+}
+{
+	<DROP><TABLE>t1=<WORD>
+	{
+		hamql.setDropClause(t1.image);
+	}
+}
+
+// ---------- CREATE節 ---------- //
+void create_table():
+{
+	Token t1 = null;
+	Schema schema = null;
+	Vector<String> names = new Vector<String>();
+	Vector<String> types = new Vector<String>();
+	String table = null;
+}
+{
+	<CREATE><TABLE>t1=<WORD>
+	{
+		table = t1.image;
+	}
+	<LK>table_attr_list(table,names,types)
+	{
+		schema = new Schema
+			(table,
+			 names.toArray(new String[0]),
+			 types.toArray(new String[0])
+			);
+		hamql.setCreateClause(schema);
+	}
+}
+
+void table_attr_list(String table, Vector<String> names, Vector<String> types):
+{
+}
+{
+	table_attr_element(table, names, types)
+	(<CONNMA>table_attr_list(table, names, types))?
+}
+
+void table_attr_element(String table, Vector<String> names, Vector<String> types):
+{
+}
+{
+	table_attr_element_name(table, names)
+	table_attr_element_type(types)
+}
+
+void table_attr_element_name(String table, Vector<String> names):
+{
+	Token t1 = null;
+	Token t2 = null;
+}
+{
+	t1=<WORD>(<DOT>t2=<WORD>)?
+	{
+		if(t2 == null){
+			names.add(table+"."+t1.image);
+		}else{
+			names.add(t1.image+"."+t2.image);
+		}
+	}
+}
+
+void table_attr_element_type(Vector<String> types):
+{
+}
+{
+		<STRING>
+		{
+			types.add(DataTypes.STRING);
+		}
+	|
+		<LONG>
+		{
+			types.add(DataTypes.LONG);
+		}
+	|
+		<DOUBLE>
+		{
+			types.add(DataTypes.DOUBLE);
+		}
+	|
+		<OBJECT>
+		{
+			types.add(DataTypes.OBJECT);
+		}
+}
+
+// ---------- INSERT節 ---------- //
+void insert_start():
+{
+	Token t1 = null;
+	Schema schema = null;
+	String[] names = new String[0];
+	String[] types = new String[0];
+}
+{
+	<INSERT><INTO>t1=<WORD>
+	{
+		schema = new Schema(t1.image, names, types);
+		hamql.setInsertClause(schema);
+	}
+}
+
+// ---------- MASTER節 ---------- //
+void master():
+{
+	MasterSet masters = new MasterSet();
+}
+{
+	<MASTER> master_list(masters)
+	{
+		hamql.setMasterClause(masters);
+	}
+}
+
+void master_list(MasterSet masters):
+{
+}
+{
+	master_source(masters)(<CONNMA>master_list(masters))?
+}
+
+void master_source(MasterSet masters):
+{
+	Token t = null;
+}
+{
+	t=<WORD>
+	{
+		masters.add(t.image);
+	}
+} 
+
+// ---------- SELECT節 ---------- //
+void select():
+{
+	AttributeList attrs = new AttributeList();	
+}
+{
+	<SELECT> attribute_list(attrs)
+	{
+		hamql.setSelectClause(attrs);
+	}
+}
+
+void attribute_list(AttributeList attrs):
+{
+	Token t1 = null;
+}
+{
+	(
+		<ASTER>
+		{
+			attrs.add("*");
+		}
+	)
+|	(
+		attribute_element(attrs)(<CONNMA>attribute_list(attrs))?
+	)
+}
+
+void attribute_element(AttributeList attrs):
+{
+	Token t1 = null;
+}
+{
+	t1=<WORD>
+	(
+			function_attribute(t1.image, attrs)
+		|	attribute(t1.image, attrs)
+	)
+}
+
+void attribute(String name, AttributeList attrs):
+{
+	Token t1 = null;
+	Token t2 = null;
+	HarmonicaAttribute attr = null;
+}
+{
+	(<DOT>(t1=<ASTER>|t1=<WORD>))?(<AS>t2=<WORD>)?
+	{
+		if(t1!=null){
+			attr = new HarmonicaAttribute(name,t1.image);
+		}else{
+			attr = new HarmonicaAttribute("",name);
+		}
+		if(t2 != null){
+			attr.setRename(t2.image);
+		}
+		attrs.add(attr);
+	}
+}
+
+void function_attribute(String fname, AttributeList attrs):
+{
+	Token t1 = null;
+	HarmonicaFunctionParameter function = null;
+	AttributeList attrs2 = new AttributeList();
+}
+{
+	<LK> (attribute_list(attrs2))? <RK> (<AS>t1=<WORD>)?
+	{
+		function = new HarmonicaFunctionParameter(fname, attrs2);
+		if(t1 != null){
+			function.setRename(t1.image);
+		}
+		attrs.add(function);
+	}
+}
+
+// ---------- FROM節 ---------- //
+void from():
+{
+	HarmonicaSourceSet sources = new HarmonicaSourceSet();
+}
+{
+	<FROM> from_list(sources)
+	{
+		hamql.setFromClause(sources);
+	}
+}
+
+void from_list(HarmonicaSourceSet sources):
+{
+}
+{
+	from_element(sources)(<CONNMA>from_list(sources))?
+}
+
+void from_element(HarmonicaSourceSet sources):
+{
+}
+{
+		source(sources) | sub_query(sources)
+}
+
+void source(HarmonicaSourceSet sources):
+{
+	Token t1 = null;
+	Token t2 = null;
+	HarmonicaSource source = new HarmonicaSource();
+	source.setType(SourceType.SOURCE);
+}
+{
+	t1=<WORD>
+	{
+		source.setSource(t1.image);
+	}
+	(window(source))?
+	{
+		sources.add(source);
+	}
+	(<AS>t2=<WORD>)?
+	{
+		if(t2 != null) source.setRename(t2.image);
+	}
+}
+
+void window(HarmonicaSource source):
+{
+	Token t1 = null;
+}
+{
+	<KLK> t1=<INTEGER_VALUE>
+	{
+		source.setWindowSize(Long.parseLong(t1.image));
+		//source.setSliding(true);
+		source.setSliding(false);
+	}
+	(<CONNMA>window_at(source))?<KRK>
+}
+
+void window_at(HarmonicaSource source):
+{
+	Token t1 = null;
+	long l = 0;
+}
+{
+	(
+		// now - val
+		(<NOW>(<MINUS>t1=<INTEGER_VALUE>)?
+			{
+				if(t1 != null){
+					source.setOriginalTime(Long.parseLong(t1.image)*(-1));
+				}else{
+					source.setOriginalTime(0);
+				}
+			}
+		)
+	|	
+		// val
+		(t1=<INTEGER_VALUE>
+			{
+				source.setOriginalTime(Long.parseLong(t1.image));
+			}
+		)
+	|
+		// data convert to time
+		l=time_function()
+			{
+				source.setOriginalTime(l);
+			}
+	)
+	{
+		source.setSliding(false);
+		debug(source.getOriginalTime());
+	}
+}
+
+long time_function():
+{
+	long l = 0;
+}
+{
+	<TIME><LK>l=time_function_arg()<RK>
+	{
+		return l;
+	}
+}
+
+long time_function_arg():
+{
+	long l = 0;
+	Token t = null;
+}
+{
+	t=<DATE_WORDS>
+	{
+		debug(t.image);
+		SimpleDateFormat df = null;
+
+		Date d = null;
+		try{
+			df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+			d = df.parse(t.image);
+		}catch(java.text.ParseException e){}
+		
+		if(d == null){
+			try{
+				df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+				d = df.parse(t.image);
+			}catch(java.text.ParseException e){}
+		}
+
+		if(d == null){
+			try{
+				df = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+				d = df.parse(t.image);
+			}catch(java.text.ParseException e){}
+		}
+
+		if(d == null)
+			throw new org.streamspinner.harmonica.query.hamql.ParseException
+				("Format is yyyy/MM/dd HH:mm:ss.SSS");
+
+		l = d.getTime();
+		return l;
+	}
+}
+
+double prm_expr():
+{
+	double l = 0;
+}
+{
+	( ( l=number() ) | ( <LK> l=add_expr() <RK> ) )
+	{ return l;}
+}
+
+double add_expr():
+{
+	double l = 0, r = 0;
+	Token t = null;
+}
+{
+	l=mul_expr() (
+		(t=<PLUS> | t=<MINUS>) r=mul_expr()
+		{ 
+			l = (t.kind == PLUS) ? l+r : l-r; 
+		}
+	)*
+	{
+		return l;
+	}
+}
+
+double mul_expr():
+{
+	double l = 0, r = 0;
+	Token t = null;
+}
+{
+	l=prm_expr() (
+		(t=<ASTER> | t=<DIV>) r=prm_expr()
+		{
+			if(t.kind == ASTER){
+				l = l*r;
+			}else{
+				if(r == 0) 
+					throw new org.streamspinner.harmonica.query.hamql.ParseException("Can't calucurate n/0");
+				l = l/r;
+			}
+		}
+	)*
+	{
+		return l;
+	}
+}
+
+void sub_query(HarmonicaSourceSet sources):
+{
+	HarmonicaSource source = new HarmonicaSource();
+	source.setType(SourceType.SUB_QUERY);
+	HamQLQuery sub_hamql = new HamQLQuery();
+	Token t1 = null;
+}
+{
+	<LK> hamql_query(sub_hamql) <RK> (<AS>t1=<WORD>)?
+	{
+		source.setQuery(sub_hamql);
+		sources.add(source);
+		if(t1 != null) source.setRename(t1.image);
+	}
+}
+
+void hamql_query(HamQLQuery sub_hamql):
+{
+	HamQLQuery tmp = hamql;
+	hamql = sub_hamql;
+}
+{
+	query()
+	{
+		hamql = tmp;
+	}
+}
+
+// ---------- WHERE節 ---------- //
+void where():
+{
+	PredicateSet conditions = new PredicateSet();
+}
+{
+	<WHERE> where_list(conditions)
+	{
+		hamql.setWhereClause(conditions);
+	}
+}
+
+void where_list(PredicateSet conditions):
+{
+}
+{
+	where_element(conditions)(<AND>where_list(conditions))?
+}
+
+void where_element(PredicateSet conditions):
+{
+	Predicate cond = null;
+	String left = null;
+	String right = null;
+	String op = null;
+	Token t1 = null;
+}
+{
+	left=where_element_part() 
+	(t1=<EQ>|t1=<GE>|t1=<GT>|t1=<LE>|t1=<LT>|t1=<NE>)
+	right=where_element_part()
+	{
+		if(t1.image.equals("=")){ op = Predicate.EQ; }
+		else if(t1.image.equals(">=")){ op = Predicate.GE; }
+		else if(t1.image.equals(">")){ op = Predicate.GT; }
+		else if(t1.image.equals("<=")){ op = Predicate.LE; }
+		else if(t1.image.equals("<")){ op = Predicate.LT; }
+		else { op = Predicate.NE; }
+
+		cond = new Predicate(left, op, right);
+		conditions.add(cond);
+	}
+}
+
+String where_element_part():
+{
+	String part = "";
+	Token t1 = null;
+	Token t2 = null;
+	double d = 0.0;
+}
+{
+	(
+		t1=<WORD>
+		(
+			<LK>(part=args())?<RK>{ return t1.image+"("+part+")"; }
+		|	(<DOT>t2=<WORD>)?
+			{
+				if(t2 != null) return t1.image + "." + t2.image; 
+				return t1.image; 
+			}
+		)
+	|	t1=<WORDS> { return t1.image; }
+	//|	d=exp(){ return (new Double(d)).toString(); }
+	|	d=add_expr(){ return Double.toString(d); }
+	)
+}
+
+String args():
+{
+	String part1 = null;
+	String part2 = null;
+}
+{
+	part1=arg()(<CONNMA>part2=args())?
+	{
+		if(part2 != null) return part1 + "," + part2;
+		return part1;
+	}
+}
+
+String arg():
+{
+	Token t1 = null;
+	Token t2 = null;
+}
+{
+	t1=<WORD>(<DOT>t2=<WORD>)?
+	{
+		if(t2 != null) return t1.image + "." + t2.image;
+		return t1.image;
+	}
+}
+
+double number():
+{
+	Token t = null;
+}
+{
+	(t=<INTEGER_VALUE>|t=<DOUBLE_VALUE>) 
+	{ 
+		return Double.parseDouble(t.image); 
+	}
+}
+
+double exp(): // 演算式の評価（右結合のみ）
+{
+	double n = 0.0;
+	double d = 0.0;
+	Token t = null;
+}
+{
+	n=number()
+	((t=<PLUS>|t=<MINUS>|t=<ASTER>|t=<DIV>)d=exp())?
+	{
+		if(t == null) return n;
+		switch(t.kind){
+			case PLUS:
+				return n+d;
+			case MINUS:
+				return n-d;
+			case ASTER:
+				return n*d;
+			case DIV:
+				return n/d;
+			default:
+				return 0.0;
+		}
+	}
+}
+
+// ---------- GROUP節 ---------- //
+void group():
+{
+	AttributeList groups = new AttributeList();
+}
+{
+	<GROUP><BY>group_list(groups)
+	{
+		hamql.setGroupClause(groups);
+	}
+}
+
+void group_list(AttributeList groups):
+{
+}
+{
+	group_element(groups)(<CONNMA>group_list(groups))?
+}
+
+void group_element(AttributeList groups):
+{
+	Attribute group = null;
+	Token t1 = null;
+	Token t2 = null;
+}
+{
+	t1=<WORD>(<DOT>t2=<WORD>)?
+	{
+		if(t2 != null) group = new Attribute(t1.image, t2.image);
+		else group = new Attribute("", t1.image);
+
+		groups.add(group);
+	}
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<wrapper name="HSQLDB" class="org.streamspinner.wrapper.RDBMSWrapper">
+	<parameter name="driver" value="org.hsqldb.jdbcDriver" />
+	<parameter name="url" value="jdbc:hsqldb:./conf/db/testdb" />
+	<parameter name="user" value="SA" />
+	<parameter name="password" value="" />
+</wrapper>

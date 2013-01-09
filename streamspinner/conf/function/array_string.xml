@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<function name="array" aggregate="true">
+	<parameter name="argtypes" value="String[]" />
+	<parameter name="returntype" value="String[]" />
+	<parameter name="owner" value="org.streamspinner.function.AggregateFunctions" />
+	<parameter name="method" value="array" />
+</function>

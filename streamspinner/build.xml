@@ -1,0 +1,87 @@
+<project name="StreamSpinner" default="compile">
+
+	<property name="project.home" value="." />
+
+	<property name="project.src" value="${project.home}/src" />
+	<property name="project.classes" value="${project.home}/bin" />
+	<property name="project.lib" value="${project.home}/lib" />
+	<property name="project.javadoc" value="${project.home}/doc/api" />
+	<property name="project.package" value="org.streamspinner.*,test.*" />
+	<property name="project.property" value="${project.classes}/StreamSpinner.properties" />
+	<property name="project.rmi.policy" value="${project.classes}/StreamSpinner.policy" />
+	<property name="project.testclass" value="test.StreamSpinnerTest" />
+	<property name="project.rmic.includes" value="**/StreamSpinnerMainSystemImpl.class,**/*DefaultConnector.class,**/HarmonicaMainSystemImpl.class,**/NodeManagerImpl.class" />
+
+	<path id="project.classpath">
+		<pathelement path="${java.class.path}/" />
+		<pathelement location="${project.classes}" />
+		<fileset dir="${project.lib}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<target name="compile">
+		<javac srcdir="${project.src}" destdir="${project.classes}" debug="on" encoding="SJIS">
+			<classpath refid="project.classpath" />
+			<!--<compilerarg value="-Xlint:deprecation" />-->
+			<!--<compilerarg value="-Xlint:unchecked" />-->
+		</javac>
+		<rmic includes="${project.rmic.includes}" classpathref="project.classpath" base="${project.classes}" />
+	</target>
+
+	<target name="execute" depends="compile">
+		<java classname="${target.class}" fork="yes" maxmemory="256m">
+			<sysproperty key="java.security.policy" value="${project.rmi.policy}" />
+			<sysproperty key="java.rmi.server.codebase" value="file:///${project.classes}/" />
+			<sysproperty key="sun.rmi.dgc.cleanInterval" value="10000" />
+			<!--<sysproperty key="com.sun.management.jmxremote" value=""/>-->
+			<classpath refid="project.classpath" />
+			<arg value="${target.arg}" />
+		</java>
+	</target>
+
+	<target name="javadoc">
+		<javadoc packagenames="${project.package}" sourcepath="${project.src}" destdir="${project.javadoc}" encoding="SJIS">
+			<classpath refid="project.classpath" />
+		</javadoc>
+	</target>
+
+	<target name="run" >
+		<antcall target="execute">
+			<param name="target.class" value="org.streamspinner.StreamSpinnerLauncher" />
+		</antcall>
+	</target>
+
+	<target name="cui" >
+		<antcall target="execute">
+			<param name="target.class" value="org.streamspinner.system.SystemManagerCUI" />
+		</antcall>
+	</target>
+
+	<target name="harmonica" >
+		<antcall target="execute">
+			<param name="target.class" value="org.streamspinner.harmonica.HarmonicaMainSystemImpl" />
+		</antcall>
+	</target>
+
+	<target name="harmonica_cui" >
+		<antcall target="execute">
+			<param name="target.class" value="org.streamspinner.harmonica.HarmonicaSystemManagerCUI" />
+		</antcall>
+	</target>
+
+
+	<target name="distnode" >
+		<antcall target="execute">
+			<param name="target.class" value="org.streamspinner.distributed.NodeLauncher" />
+			<param name="target.arg" value="gui" />
+		</antcall>
+	</target>
+
+	<target name="distmonitor" >
+		<antcall target="execute">
+			<param name="target.class" value="org.streamspinner.distributed.gui.DistributedSystemMonitor" />
+		</antcall>
+	</target>
+
+</project>

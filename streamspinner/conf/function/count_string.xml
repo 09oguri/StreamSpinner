@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<function name="count" aggregate="true">
+	<parameter name="argtypes" value="String[]" />
+	<parameter name="returntype" value="Long" />
+	<parameter name="owner" value="org.streamspinner.function.AggregateFunctions" />
+	<parameter name="method" value="count" />
+</function>
