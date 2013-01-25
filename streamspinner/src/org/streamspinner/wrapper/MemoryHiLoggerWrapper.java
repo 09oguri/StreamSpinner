@@ -31,8 +31,8 @@ public class MemoryHiLoggerWrapper extends Wrapper implements Runnable {
 	// 計測するチャンネル数、ユニット数
 	// 変更する場合はロガーユーティリティでメモリハイロガーを再設定する必要がある
 	// ユニット毎に別々のチャンネル数を設定できない
-	static final int MAX_CH = 14;	// 最大14ch
-	static final int MAX_UNIT = 6;	// 最大6unit
+	static final int MAX_CH = 10;	// 最大14ch
+	static final int MAX_UNIT = 4;	// 最大6unit
 	
 	private String[] table = null;
 	private String hostname = null;
@@ -294,9 +294,9 @@ public class MemoryHiLoggerWrapper extends Wrapper implements Runnable {
 			}
 			for(int i = 0; i < voltListSize; i += 2) {
 				// (TODO) どっちのチャンネルが12Vか5Vかを判別できるようにする必要がある
-				// ch1が赤5V線、ch2が黄12V線
-//				power.get(unit).add(Math.abs((Double) volt.get(unit).get(i)) * 50.0 + Math.abs((Double) volt.get(unit).get(i + 1)) * 120.0);
-				power.get(unit).add(Math.abs((Double) volt.get(unit).get(i)) * 120.0 + Math.abs((Double) volt.get(unit).get(i + 1)) * 50.0);
+				// ch1が5V線、ch2が12V線
+				power.get(unit).add(Math.abs((Double) volt.get(unit).get(i)) * 50.0 + Math.abs((Double) volt.get(unit).get(i + 1)) * 120.0);
+//				power.get(unit).add(Math.abs((Double) volt.get(unit).get(i)) * 120.0 + Math.abs((Double) volt.get(unit).get(i + 1)) * 50.0);
 			}
 			volt.get(unit).clear();
 		}
