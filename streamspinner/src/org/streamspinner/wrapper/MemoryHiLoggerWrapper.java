@@ -139,7 +139,7 @@ public class MemoryHiLoggerWrapper extends Wrapper implements Runnable {
 				//System.out.println("sleeptime: " + (INTERVAL2 - (after - before)));
 
 				// ’x‰„‰ğÁ
-				int delayTime = 2;
+				int delayTime = 1;
 				if(getNumData(rec) < getDataNum + DATANUM * delayTime) {	// ƒƒ‚ƒŠ“àƒf[ƒ^‚ª‚È‚­‚È‚é‚Ì‚ğ–h‚®‚½‚ß‚ÉdelayTime•b‚Í•K‚¸’x‚ê‚é
 					Thread.sleep(INTERVAL2);
 					//System.out.println("sleeptime: " + INTERVAL2);
