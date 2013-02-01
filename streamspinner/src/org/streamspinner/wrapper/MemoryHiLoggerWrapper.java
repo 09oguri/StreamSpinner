@@ -20,7 +20,16 @@ import org.streamspinner.query.ORNode;
 
 
 public class MemoryHiLoggerWrapper extends Wrapper implements Runnable {
-
+	private static byte[] unsignedByte;
+	static {
+		unsignedByte = new byte[256];
+		for(int i = 0; i < unsignedByte.length; i++) {
+			unsignedByte[i] = (byte) i;
+		}
+	}
+	
+	private int[] ubIndex = new int[8];
+	
 	public static String PARAMETER_HOSTNAME = "hostname";	// MemoryHiLoggerのIPアドレス
 	public static String PARAMETER_PORT = "port";	// MemoryHiLoggerのポート番号
 	public static String PARAMETER_INTERVAL = "interval";	// メモリハイロガーの測定間隔(10, 50, 100ms)
@@ -333,18 +342,40 @@ public class MemoryHiLoggerWrapper extends Wrapper implements Runnable {
 
 	
 	// データ要求コマンドのサンプリング番号のインクリメント
+//	private void incRequireCommand() {
+//		for(int i = 12; i > 5; i--) {
+//			if(req[i] == 0xffffffff) {
+//				req[i] = 0x00000000;
+//				req[i - 1]++;
+//				if(req[i - 1] != 0xffffffff) {
+//					break;
+//				}
+//			}else if(req[5] == 0xffffffff) {
+//				return;
+//			}else {
+//				req[12]++;
+//				break;
+//			}
+//		}
+//	}
+	
 	private void incRequireCommand() {
+		ubIndex[0]++;
 		for(int i = 12; i > 5; i--) {
-			if(req[i] == 0xffffffff) {
-				req[i] = 0x00000000;
-				req[i - 1]++;
-				if(req[i - 1] != 0xffffffff) {
-					break;
+			if(ubIndex[7] == 256) {
+				System.exit(1);
+			}
+			if(ubIndex[12-i] == 256) {
+				ubIndex[12-i] = 0;
+				req[i] = unsignedByte[ubIndex[12-i]];
+				
+				ubIndex[12-i+1]++;
+				if(ubIndex[12-i+1] == 256) {
+					continue;
 				}
-			}else if(req[5] == 0xffffffff) {
-				return;
-			}else {
-				req[12]++;
+				req[i-1] = unsignedByte[ubIndex[12-i+1]];
+			} else {
+				req[12] = unsignedByte[ubIndex[0]];
 				break;
 			}
 		}
